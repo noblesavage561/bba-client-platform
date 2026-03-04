@@ -1,0 +1,13 @@
+# Code Owners
+* @noblesavage561
+
+# Frontend
+/frontend/ @noblesavage561
+
+# Backend
+/backend/ @noblesavage561
+
+# Infrastructure
+/docker-compose.yml @noblesavage561
+/Dockerfile.* @noblesavage561
+/.github/ @noblesavage561

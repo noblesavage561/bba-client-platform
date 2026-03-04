@@ -1,0 +1,10 @@
+Alembic database migrations for BBA Client Platform.
+
+To create a new migration:
+    flask db migrate -m "description of changes"
+
+To apply migrations:
+    flask db upgrade
+
+To rollback:
+    flask db downgrade

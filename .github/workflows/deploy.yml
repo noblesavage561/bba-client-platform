@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: docker build -f Dockerfile.frontend -t bba-frontend:${{ github.sha }} .
+
+      - name: Build backend image
+        run: docker build -f Dockerfile.backend -t bba-backend:${{ github.sha }} .
+
+      # TODO: Add deployment steps for your cloud provider
+      # Example: Push to ECR, deploy to ECS, Kubernetes, etc.
+      - name: Deploy (placeholder)
+        run: echo "Add deployment steps here"
