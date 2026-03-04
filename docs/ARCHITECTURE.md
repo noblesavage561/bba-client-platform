@@ -20,7 +20,7 @@ The BBA Client Platform follows a monorepo architecture with clear separation be
 
 ## Frontend Architecture
 
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 15+ with App Router
 - **State**: React Query for server state, Zustand for UI state
 - **Forms**: React Hook Form + Zod validation
 - **Styling**: Tailwind CSS + CSS Modules

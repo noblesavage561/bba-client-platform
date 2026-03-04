@@ -5,7 +5,7 @@ BBA Services client intake platform with financials capabilities, automation wor
 ## Architecture
 
 This is a monorepo containing:
-- **Frontend**: Next.js 14+ with TypeScript
+- **Frontend**: Next.js 15+ with TypeScript
 - **Backend**: Python Flask API
 - **Shared**: Common types, constants, and schemas
 
