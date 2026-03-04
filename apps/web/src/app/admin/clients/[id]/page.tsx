@@ -63,12 +63,13 @@ const stageColors: Record<string, string> = {
   CLOSED: "bg-red-100 text-red-800",
 };
 
-export default function ClientDetailPage({
+export default async function ClientDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const client = { ...mockClient, id: params.id };
+  const { id } = await params;
+  const client = { ...mockClient, id };
 
   return (
     <div className="p-6">
@@ -171,7 +172,7 @@ export default function ClientDetailPage({
         {/* Tasks */}
         <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-brand-blue mb-4">Tasks</h2>
-          <TaskPanel clientId={params.id} />
+          <TaskPanel clientId={id} />
         </div>
 
         {/* Notes */}

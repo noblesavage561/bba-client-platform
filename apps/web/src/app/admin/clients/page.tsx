@@ -12,12 +12,13 @@ const mockClients = [
   { id: "6", businessName: "Sunrise Medical Spa", stage: "STRATEGY", programTrack: "SBA Express", readinessScore: 72, ownerName: "Dr. Aisha Patel", updatedAt: "2024-01-12" },
 ];
 
-export default function ClientsPage({
+export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: { stage?: string };
+  searchParams: Promise<{ stage?: string }>;
 }) {
-  const activeStage = searchParams.stage ?? "ALL";
+  const { stage } = await searchParams;
+  const activeStage = stage ?? "ALL";
   const filtered = activeStage === "ALL"
     ? mockClients
     : mockClients.filter((c) => c.stage === activeStage);

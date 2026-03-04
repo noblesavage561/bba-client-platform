@@ -6,11 +6,12 @@ import { updateChecklistFromDocument } from "@/lib/ingestion/checklist-updater";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const document = await prisma.document.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!document) {
@@ -19,7 +20,7 @@ export async function POST(
 
     // Mark as processing
     await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "PROCESSING" },
     });
 
@@ -38,7 +39,7 @@ export async function POST(
 
     // Update document with extracted data
     await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: "PROCESSED",
         extractedData: JSON.stringify(result.extractedData),
@@ -54,7 +55,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      documentId: params.id,
+      documentId: id,
       documentType: result.documentType,
       extractedData: result.extractedData,
     });
@@ -62,7 +63,7 @@ export async function POST(
     console.error("[DOCUMENT_PROCESS]", error);
 
     await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "FAILED" },
     }).catch(() => {});
 

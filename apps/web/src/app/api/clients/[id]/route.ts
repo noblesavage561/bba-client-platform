@@ -5,16 +5,17 @@ import { authOptions } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const client = await prisma.client.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: { select: { name: true, email: true, image: true } },
         documents: { orderBy: { uploadedAt: "desc" } },
@@ -40,9 +41,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,7 +54,7 @@ export async function PATCH(
     const { stage, programTrack, readinessScore, businessName } = body;
 
     const client = await prisma.client.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(stage && { stage }),
         ...(programTrack !== undefined && { programTrack }),
@@ -70,15 +72,16 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await prisma.client.delete({ where: { id: params.id } });
+    await prisma.client.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[CLIENT_DELETE]", error);

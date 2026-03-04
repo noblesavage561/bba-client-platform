@@ -29,7 +29,7 @@ export async function updateChecklistFromDocument(
     },
   });
 
-  const toUpdate = items.filter((item) =>
+  const toUpdate = items.filter((item: { id: string; label: string }) =>
     checklistLabels.some(
       (label) =>
         item.label.toLowerCase().includes(label.toLowerCase()) ||
@@ -58,7 +58,7 @@ export async function updateChecklistFromDocument(
     });
 
     if (bankStatementCount >= 3) {
-      const bankItems = items.filter((item) =>
+      const bankItems = items.filter((item: { id: string; label: string }) =>
         item.label.toLowerCase().includes("bank statement")
       );
       for (const item of bankItems) {
@@ -99,8 +99,8 @@ async function recalculateReadinessScore(clientId: string): Promise<void> {
 
   if (allItems.length === 0) return;
 
-  const required = allItems.filter((i) => i.required);
-  const completed = required.filter((i) => i.status === "COMPLETE");
+  const required = allItems.filter((i: { required: boolean; status: string }) => i.required);
+  const completed = required.filter((i: { required: boolean; status: string }) => i.status === "COMPLETE");
 
   const score = required.length > 0
     ? Math.round((completed.length / required.length) * 100)
