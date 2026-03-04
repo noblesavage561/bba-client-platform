@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireSuperAdminSession } from "@/lib/authHelpers";
 
 export async function GET() {
   try {
@@ -17,10 +16,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !["SUPER_ADMIN", "PROGRAM_MANAGER"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { error } = await requireSuperAdminSession();
+    if (error) return error;
 
     const body = await req.json();
     const { step, order, label, type, options, required, conditionalField, conditionalValue, description } = body;

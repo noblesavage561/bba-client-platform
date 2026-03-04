@@ -1,13 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
-import crypto from "crypto";
-
-function verifyPassword(password: string, hash: string): boolean {
-  // Simple SHA-256 check; in production use bcrypt
-  const hashed = crypto.createHash("sha256").update(password).digest("hex");
-  return hashed === hash;
-}
+import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -36,7 +30,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = verifyPassword(credentials.password, user.hashedPassword);
+        const isValid = await bcrypt.compare(credentials.password, user.hashedPassword);
         if (!isValid) {
           return null;
         }

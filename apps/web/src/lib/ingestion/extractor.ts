@@ -85,8 +85,9 @@ function extractBankStatement(
   ];
   let bankName: string | undefined;
   for (const pat of bankPatterns) {
-    if (pat.test(text)) {
-      bankName = pat.source.replace(/\\\./g, ".").replace(/i$/, "").trim();
+    const m = text.match(pat);
+    if (m) {
+      bankName = m[0];
       break;
     }
   }

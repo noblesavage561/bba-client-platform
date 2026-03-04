@@ -16,9 +16,36 @@ export async function POST(req: NextRequest) {
 
     const { clientId, answers, step, completed } = validated.data;
 
+    // If clientId is "pending", create a guest lead client record
+    let resolvedClientId = clientId;
+    if (clientId === "pending") {
+      const answerMap = answers as Record<string, unknown>;
+      const businessName = (answerMap.businessName as string) ?? "New Applicant";
+      const ownerEmail = (answerMap.ownerEmail as string) ?? `guest-${Date.now()}@pending.bba`;
+
+      // Find or create a user for this email
+      let user = await prisma.user.findUnique({ where: { email: ownerEmail } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: { email: ownerEmail, name: answerMap.ownerName as string ?? businessName, role: "CLIENT" },
+        });
+      }
+
+      // Find or create the client record
+      const existing = await prisma.client.findUnique({ where: { userId: user.id } });
+      if (existing) {
+        resolvedClientId = existing.id;
+      } else {
+        const newClient = await prisma.client.create({
+          data: { userId: user.id, businessName, stage: "LEAD" },
+        });
+        resolvedClientId = newClient.id;
+      }
+    }
+
     const submission = await prisma.intakeSubmission.create({
       data: {
-        clientId,
+        clientId: resolvedClientId,
         answers: JSON.stringify(answers),
         step,
         completed,
@@ -29,7 +56,7 @@ export async function POST(req: NextRequest) {
     // If completed, advance client to INTAKE stage
     if (completed) {
       await prisma.client.update({
-        where: { id: clientId },
+        where: { id: resolvedClientId },
         data: { stage: "INTAKE" },
       });
     }

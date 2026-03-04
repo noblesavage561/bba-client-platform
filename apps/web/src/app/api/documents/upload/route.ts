@@ -44,6 +44,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate clientId - must be a cuid-like alphanumeric string, no slashes or dots
+    if (!clientId || !/^[a-z0-9]+$/i.test(clientId) || clientId.length > 30) {
+      return NextResponse.json(
+        { error: "Invalid clientId" },
+        { status: 400 }
+      );
+    }
+
     // Classify document type if not provided
     const classification = classify(file.name, file.type);
     const resolvedType = documentType || classification.documentType;

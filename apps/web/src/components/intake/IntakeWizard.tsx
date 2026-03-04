@@ -106,11 +106,13 @@ export function IntakeWizard() {
     if (!validateStep()) return;
     setLoading(true);
     try {
+      // In production, retrieve the authenticated client's ID from session
+      // For now, submit the intake data to create a new lead client record
       const response = await fetch("/api/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientId: "demo-client-id",
+          clientId: "pending", // Server will create/find client by session
           answers: formData,
           step: 5,
           completed: true,

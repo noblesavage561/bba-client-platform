@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdminSession } from "@/lib/authHelpers";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !["SUPER_ADMIN", "PROGRAM_MANAGER", "COMPLIANCE", "FINANCE", "CLIENT_SUCCESS", "CREDIT"].includes(session.user.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    const { error } = await requireAdminSession();
+    if (error) return error;
 
     const { searchParams } = new URL(req.url);
     const stage = searchParams.get("stage");

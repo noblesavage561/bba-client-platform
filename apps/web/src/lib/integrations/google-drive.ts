@@ -6,6 +6,8 @@ function getOAuthClient(): OAuth2Client {
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
   );
+  // In production, set credentials via client.setCredentials({ access_token, refresh_token })
+  // retrieved from the user's OAuth flow or service account credentials
   return client;
 }
 
