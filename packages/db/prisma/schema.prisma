@@ -1,0 +1,244 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Role values: SUPER_ADMIN | PROGRAM_MANAGER | COMPLIANCE | FINANCE | CLIENT_SUCCESS | CREDIT | CLIENT
+// ClientStage values: LEAD | INTAKE | STRATEGY | FOUNDATION | ACTIVE | FUNDED | CLOSED
+// DocumentType values: BANK_STATEMENT | TAX_RETURN | W2 | FORM_1099 | K1 | FORMATION_DOC | INVOICE | CONTRACT | ID_DOCUMENT | OTHER
+// DocumentStatus values: PENDING | PROCESSING | PROCESSED | FAILED | REJECTED
+// ChecklistStatus values: PENDING | IN_PROGRESS | COMPLETE | NOT_APPLICABLE
+// TaskPriority values: LOW | MEDIUM | HIGH | URGENT
+// TaskStatus values: OPEN | IN_PROGRESS | DONE
+// NotificationType values: INFO | WARNING | SUCCESS | ERROR
+// QuestionType values: TEXT | TEXTAREA | SELECT | MULTISELECT | RADIO | CHECKBOX | DATE | NUMBER | FILE
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  role           String    @default("CLIENT")
+  hashedPassword String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  client        Client?
+  assignedTasks Task[]        @relation("AssignedTasks")
+  notes         Note[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Client {
+  id             String      @id @default(cuid())
+  userId         String      @unique
+  businessName   String
+  stage          String      @default("LEAD")
+  programTrack   String?
+  readinessScore Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  intakeSubmissions IntakeSubmission[]
+  documents         Document[]
+  checklistItems    ChecklistItem[]
+  tasks             Task[]
+  notes             Note[]
+}
+
+model IntakeSubmission {
+  id          String    @id @default(cuid())
+  clientId    String
+  answers     String    @default("{}")
+  step        Int       @default(1)
+  completed   Boolean   @default(false)
+  submittedAt DateTime?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id                       String         @id @default(cuid())
+  clientId                 String
+  filename                 String
+  originalName             String
+  mimeType                 String
+  fileSize                 Int
+  storageKey               String
+  documentType             String         @default("OTHER")
+  status                   String         @default("PENDING")
+  extractedData            String         @default("{}")
+  classificationConfidence Float?
+  period                   String?
+  uploadedAt               DateTime       @default(now())
+  processedAt              DateTime?
+
+  client              Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  bankStatementAnalysis BankStatementAnalysis?
+}
+
+model BankStatementAnalysis {
+  id                     String   @id @default(cuid())
+  documentId             String   @unique
+  period                 String
+  totalDeposits          Float    @default(0)
+  totalWithdrawals       Float    @default(0)
+  avgMonthlyDeposits     Float    @default(0)
+  avgMonthlyWithdrawals  Float    @default(0)
+  netCashflow            Float    @default(0)
+  overdraftCount         Int      @default(0)
+  nsfCount               Int      @default(0)
+  recurringTransactions  String   @default("[]")
+  lenderReadySummary     String   @default("{}")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model ChecklistItem {
+  id            String          @id @default(cuid())
+  clientId      String
+  label         String
+  description   String?
+  category      String
+  status        String          @default("PENDING")
+  documentType  String?
+  required      Boolean         @default(true)
+  autoDetected  Boolean         @default(false)
+  completedAt   DateTime?
+  dueDate       DateTime?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String       @id @default(cuid())
+  assignedToId String?
+  clientId    String?
+  title       String
+  description String?
+  priority    String       @default("MEDIUM")
+  status      String       @default("OPEN")
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assignedTo User?   @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  client     Client? @relation(fields: [clientId], references: [id])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  authorId   String
+  clientId   String
+  content    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  author User   @relation(fields: [authorId], references: [id])
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   String   @default("{}")
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String           @default("INFO")
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model IntakeQuestion {
+  id               String       @id @default(cuid())
+  step             Int
+  order            Int
+  label            String
+  description      String?
+  type             String
+  options          String       @default("[]")
+  required         Boolean      @default(true)
+  conditionalField String?
+  conditionalValue String?
+  active           Boolean      @default(true)
+}
+
+model ProgramTrack {
+  id               String  @id @default(cuid())
+  name             String
+  description      String?
+  checklistTemplate String  @default("[]")
+  active           Boolean @default(true)
+}
+
+model EmailTemplate {
+  id        String  @id @default(cuid())
+  name      String
+  trigger   String
+  subject   String
+  body      String
+  active    Boolean @default(true)
+  variables String  @default("[]")
+}

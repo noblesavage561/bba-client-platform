@@ -1,0 +1,2 @@
+export type Role = "SUPER_ADMIN" | "PROGRAM_MANAGER" | "COMPLIANCE" | "FINANCE" | "CLIENT_SUCCESS" | "CREDIT" | "CLIENT";
+export type ClientStage = "LEAD" | "INTAKE" | "STRATEGY" | "FOUNDATION" | "ACTIVE" | "FUNDED" | "CLOSED";

@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-ink: #3f4147;
+    --brand-ink-soft: #545863;
+    --brand-sky: #2f97cf;
+    --brand-sky-soft: #63b9e5;
+    --brand-cloud: #eff1f5;
+    --confidence-green: #23a55a;
+    --confidence-yellow: #f0b429;
+    --confidence-red: #d64545;
+  }
+
+  body {
+    @apply bg-brand-cloud text-slate-900 antialiased;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(47, 151, 207, 0.15), transparent 28%),
+      radial-gradient(circle at 85% 85%, rgba(63, 65, 71, 0.12), transparent 35%);
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-gold hover:bg-brand-gold-light text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-blue hover:bg-brand-blue-light text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200;
+  }
+
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white/85 p-6 shadow-md backdrop-blur;
+  }
+
+  .confidence-green {
+    @apply border border-green-300 bg-green-50 text-green-800;
+  }
+
+  .confidence-yellow {
+    @apply border border-amber-300 bg-amber-50 text-amber-800;
+  }
+
+  .confidence-red {
+    @apply border border-red-300 bg-red-50 text-red-800;
+  }
+
+  .command-surface {
+    @apply rounded-2xl border border-slate-200 bg-white/80 shadow-lg backdrop-blur;
+  }
+
+  .command-grid {
+    background-image:
+      linear-gradient(rgba(63, 65, 71, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63, 65, 71, 0.08) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+}
