@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
@@ -34,12 +36,34 @@ export function Navbar() {
             >
               Preparer Workspace
             </Link>
-            <Link
-              href="/apply"
-              className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
-            >
-              Start Intake
-            </Link>
+            {session ? (
+              <>
+                <span className="text-sm text-slate-500">
+                  {session.user.email}
+                </span>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-slate-600 hover:text-red-600 text-sm font-medium transition-colors"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           <button
@@ -68,12 +92,31 @@ export function Navbar() {
             <Link href="/admin" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
               Preparer Workspace
             </Link>
-            <Link
-              href="/apply"
-              className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
-            >
-              Start Intake
-            </Link>
+            {session ? (
+              <>
+                <div className="px-2 py-2 text-sm text-slate-500">
+                  {session.user.email}
+                </div>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="block w-full text-left text-red-600 hover:text-red-700 px-2 py-2 text-sm font-medium"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

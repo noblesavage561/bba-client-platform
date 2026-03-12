@@ -12,3 +12,4 @@ prisma/dev.db
 *.tsbuildinfo
 coverage
 .turbo
+backups/

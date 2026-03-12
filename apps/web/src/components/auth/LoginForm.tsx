@@ -69,6 +69,15 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
             Sign in
           </Button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <a href="/auth/signup" className="text-brand-blue hover:underline font-medium">
+              Sign up
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

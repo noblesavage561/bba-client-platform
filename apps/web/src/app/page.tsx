@@ -64,14 +64,14 @@ export default function HomePage() {
               AI-powered workflows for clients, preparers, and reviewers with progressive disclosure, confidence scoring, and self-healing correction loops.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/apply" className="btn-primary text-center text-base">
-                Start Tax Year Wizard
+              <Link href="/auth/signup" className="btn-primary text-center text-base">
+                Sign Up Now
               </Link>
               <Link
-                href="/portal"
+                href="/auth/login"
                 className="rounded-lg border border-brand-blue px-6 py-3 text-center text-base font-semibold text-brand-blue transition-colors hover:bg-brand-blue hover:text-white"
               >
-                Open Client Portal
+                Sign In
               </Link>
             </div>
             <div className="mt-10 grid max-w-xl grid-cols-3 gap-3 text-center">

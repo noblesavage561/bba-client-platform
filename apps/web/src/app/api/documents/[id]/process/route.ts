@@ -3,6 +3,7 @@ import { readFile } from "fs/promises";
 import { prisma } from "@/lib/db";
 import { runIngestionPipeline } from "@/lib/ingestion/pipeline";
 import { updateChecklistFromDocument } from "@/lib/ingestion/checklist-updater";
+import { extractDocumentData, classifyDocument } from "@/lib/ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/authHelpers";
@@ -43,38 +44,61 @@ export async function POST(
 
     // Load file buffer
     const buffer = await readFile(document.storageKey);
+    const textContent = buffer.toString('utf-8');
 
-    // Run ingestion pipeline
-    const result = await runIngestionPipeline({
-      documentId: document.id,
-      clientId: document.clientId,
-      filename: document.originalName,
-      mimeType: document.mimeType,
-      buffer,
-      documentType: document.documentType,
-    });
+    // Determine processing method: AI-powered if enabled, fallback to rule-based
+    const useAI = process.env.OPENROUTER_API_KEY && process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
+    
+    let extractedData;
+    let documentType = document.documentType;
+    let confidence = 0;
+
+    if (useAI) {
+      // AI-powered extraction
+      const aiResult = await extractDocumentData(textContent);
+      const classification = await classifyDocument(textContent);
+      
+      extractedData = aiResult;
+      documentType = classification.type || aiResult.documentType || document.documentType;
+      confidence = classification.confidence || 0.95;
+    } else {
+      // Fallback to rule-based ingestion pipeline
+      const result = await runIngestionPipeline({
+        documentId: document.id,
+        clientId: document.clientId,
+        filename: document.originalName,
+        mimeType: document.mimeType,
+        buffer,
+        documentType: document.documentType,
+      });
+      
+      extractedData = result.extractedData;
+      documentType = result.documentType;
+      confidence = result.confidence || 0;
+    }
 
     // Update document with extracted data
     await prisma.document.update({
       where: { id },
       data: {
         status: "PROCESSED",
-        extractedData: JSON.stringify(result.extractedData),
-        documentType: result.documentType,
-        classificationConfidence: result.confidence,
-        period: result.period ?? null,
+        extractedData: JSON.stringify(extractedData),
+        documentType: documentType,
+        classificationConfidence: confidence,
+        period: extractedData.period ?? null,
         processedAt: new Date(),
       },
     });
 
     // Update checklist based on document type
-    await updateChecklistFromDocument(document.clientId, result.documentType);
+    await updateChecklistFromDocument(document.clientId, documentType);
 
     return NextResponse.json({
       success: true,
       documentId: id,
-      documentType: result.documentType,
-      extractedData: result.extractedData,
+      documentType: documentType,
+      extractedData: extractedData,
+      method: useAI ? 'ai' : 'rule-based',
     });
   } catch (error) {
     console.error("[DOCUMENT_PROCESS]", error);
