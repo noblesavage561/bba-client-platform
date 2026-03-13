@@ -1,13 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { ROUTES } from "@/lib/routes";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session } = useSession();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadUnread = async () => {
+      try {
+        const response = await fetch("/api/notifications", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as Array<{ read?: boolean }>;
+        const unread = payload.filter((item) => item.read === false).length;
+        if (mounted) {
+          setUnreadCount(unread);
+        }
+      } catch {
+        // Silently ignore when user is not authenticated.
+      }
+    };
+
+    loadUnread();
+    const interval = setInterval(loadUnread, 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-xl">
@@ -19,19 +48,19 @@ export function Navbar() {
 
           <div className="hidden md:flex items-center gap-6">
             <Link
-              href="/"
+              href={ROUTES.HOME}
               className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
             >
               Platform
             </Link>
             <Link
-              href="/portal"
+              href={ROUTES.PORTAL}
               className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
             >
               Client Portal
             </Link>
             <Link
-              href="/admin"
+              href={ROUTES.PREPARER}
               className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
             >
               Preparer Workspace
@@ -47,6 +76,24 @@ export function Navbar() {
                 >
                   Sign Out
                 </button>
+                <Link
+                  href={ROUTES.PORTAL_NOTIFICATIONS}
+                  className="relative text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
+                  aria-label="Open notification center"
+                >
+                  <span className="text-lg">🔔</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-3 min-w-[18px] px-1 h-[18px] rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  href={ROUTES.APPLY}
+                  className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+                >
+                  Start Intake
+                </Link>
               </>
             ) : (
               <>
@@ -57,10 +104,10 @@ export function Navbar() {
                   Sign In
                 </Link>
                 <Link
-                  href="/auth/signup"
+                  href={ROUTES.REGISTER}
                   className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
                 >
-                  Sign Up
+                  Register
                 </Link>
               </>
             )}
@@ -83,13 +130,13 @@ export function Navbar() {
 
         {mobileOpen && (
           <div className="md:hidden pb-4 border-t border-slate-200 mt-2 pt-3 space-y-1">
-            <Link href="/" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+            <Link href={ROUTES.HOME} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
               Platform
             </Link>
-            <Link href="/portal" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+            <Link href={ROUTES.PORTAL} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
               Client Portal
             </Link>
-            <Link href="/admin" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+            <Link href={ROUTES.PREPARER} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
               Preparer Workspace
             </Link>
             {session ? (
@@ -103,6 +150,15 @@ export function Navbar() {
                 >
                   Sign Out
                 </button>
+                <Link href={ROUTES.PORTAL_NOTIFICATIONS} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+                  Notification Center{unreadCount > 0 ? ` (${unreadCount})` : ""}
+                </Link>
+                <Link
+                  href={ROUTES.APPLY}
+                  className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
+                >
+                  Start Intake
+                </Link>
               </>
             ) : (
               <>
@@ -110,10 +166,10 @@ export function Navbar() {
                   Sign In
                 </Link>
                 <Link
-                  href="/auth/signup"
+                  href={ROUTES.REGISTER}
                   className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
                 >
-                  Sign Up
+                  Register
                 </Link>
               </>
             )}

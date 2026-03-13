@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getPortalClient } from "@/lib/portalClient";
-import { buildLoginHref } from "@/lib/authRouting";
+import { buildLoginHref, buildRegisterHref } from "@/lib/authRouting";
 import { ROUTES } from "@/lib/routes";
+import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
+import { AIAdvisorPanel } from "@/components/portal/AIAdvisorPanel";
+import { SignalFeed } from "@/components/portal/SignalFeed";
 
 const PIPELINE_STAGES = [
   { key: "LEAD", label: "Lead", color: "bg-gray-400" },
@@ -43,6 +46,12 @@ export default async function PortalPage() {
           <Link href={buildLoginHref(ROUTES.PORTAL)} className="inline-block mt-6 bg-brand-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-blue-light transition-colors">
             Go to Login
           </Link>
+          <p className="text-sm text-gray-500 mt-3">
+            First time here?{" "}
+            <Link href={buildRegisterHref(ROUTES.PORTAL)} className="text-brand-blue font-medium hover:underline">
+              Create your sign-in
+            </Link>
+          </p>
         </div>
       </div>
     );
@@ -62,64 +71,30 @@ export default async function PortalPage() {
     );
   }
 
-  const [documents, checklistItems, pendingTasksCount, notifications, unreadNotificationsCount] = await Promise.all([
-    prisma.document.findMany({
-      where: { clientId: client.id },
-      select: {
-        status: true,
-        classificationConfidence: true,
-      },
-    }),
-    prisma.checklistItem.findMany({
-      where: { clientId: client.id },
-      select: {
-        required: true,
-        status: true,
-      },
-    }),
-    prisma.task.count({
-      where: {
-        clientId: client.id,
-        status: { not: "DONE" },
-      },
-    }),
-    prisma.notification.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.notification.count({
-      where: {
-        userId: session.user.id,
-        read: false,
-      },
-    }),
+  const portalUserId = typeof session.user?.id === "string" && session.user.id.length > 0
+    ? session.user.id
+    : client.userId;
+
+  const [notifications, unreadNotificationsCount] = await Promise.all([
+    portalUserId
+      ? prisma.notification.findMany({
+          where: { userId: portalUserId },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        })
+      : Promise.resolve([] as Array<{ id: string; message: string; type: string; createdAt: Date }>),
+    portalUserId
+      ? prisma.notification.count({
+          where: {
+            userId: portalUserId,
+            read: false,
+          },
+        })
+      : Promise.resolve(0),
   ]);
 
   const currentStage = client.stage;
   const currentStageIndex = PIPELINE_STAGES.findIndex((s) => s.key === currentStage);
-
-  const processedDocs = documents.filter((doc) => doc.status === "PROCESSED").length;
-  const requiredChecklist = checklistItems.filter((item) => item.required);
-  const completedChecklist = requiredChecklist.filter((item) => item.status === "COMPLETE").length;
-  const checklistPct = requiredChecklist.length > 0
-    ? Math.round((completedChecklist / requiredChecklist.length) * 100)
-    : 0;
-
-  const confidenceValues = documents
-    .map((doc) => doc.classificationConfidence)
-    .filter((value): value is number => value !== null);
-  const aiConfidence = confidenceValues.length > 0
-    ? Math.round((confidenceValues.reduce((sum, value) => sum + value, 0) / confidenceValues.length) * 100)
-    : 0;
-
-  const stats = [
-    { label: "Documents Processed", value: `${processedDocs}`, icon: "📄" },
-    { label: "Checklist Completion", value: `${checklistPct}%`, icon: "✅" },
-    { label: "AI Confidence", value: `${aiConfidence}%`, icon: "🧠" },
-    { label: "Pending Tasks", value: `${pendingTasksCount}`, icon: "📋" },
-    { label: "Unread Alerts", value: `${unreadNotificationsCount}`, icon: "🔔" },
-  ];
 
   const hydratedNotifications = notifications.length > 0
     ? notifications.map((item) => ({
@@ -149,7 +124,7 @@ export default async function PortalPage() {
       <div className="bg-brand-blue text-white py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold">Welcome back, {client.businessName} 👋</h1>
-          <p className="text-slate-200 mt-1">Your workflow status and AI confidence overview.</p>
+          <p className="text-slate-200 mt-1">Your workflow status, AI confidence overview, and live case updates.</p>
         </div>
       </div>
 
@@ -191,15 +166,7 @@ export default async function PortalPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center">
-              <div className="text-3xl mb-2">{stat.icon}</div>
-              <div className="text-2xl font-bold text-brand-blue">{stat.value}</div>
-              <div className="text-xs text-gray-500 mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+        <DashboardMetrics caseId={client.id} className="mb-8" />
 
         <div className="grid md:grid-cols-3 gap-4 mb-8">
           <Link
@@ -222,23 +189,35 @@ export default async function PortalPage() {
               <div className="text-slate-100 text-sm">Review missing items and filing blockers</div>
             </div>
           </Link>
-          <a
-            href="mailto:bruce@bbaservices.org"
-            className="bg-white border-2 border-brand-blue text-brand-blue rounded-xl p-5 hover:bg-blue-50 transition-colors flex items-center gap-3"
+          <Link
+            href={ROUTES.PORTAL_NOTIFICATIONS}
+            className="bg-white border-2 border-brand-blue text-brand-blue rounded-xl p-5 hover:bg-brand-blue/5 transition-colors flex items-center gap-3"
           >
             <span className="text-3xl">💬</span>
             <div>
               <div className="font-semibold">Contact Your Advisor</div>
-              <div className="text-gray-500 text-sm">Ask tax, planning, or review questions securely</div>
+              <div className="text-gray-500 text-sm">View portal notices and advisor updates</div>
             </div>
-          </a>
+          </Link>
+        </div>
+
+        <div className="grid xl:grid-cols-2 gap-6 mb-8">
+          <AIAdvisorPanel caseId={client.id} userRole="client" />
+          <SignalFeed
+            caseId={client.id}
+            role="client"
+            maxItems={8}
+            autoRefresh
+          />
         </div>
 
         <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
-          <h2 className="text-lg font-semibold text-brand-blue mb-4">Recent Signals</h2>
+          <h2 className="text-lg font-semibold text-brand-blue mb-4">
+            Recent Notifications {unreadNotificationsCount > 0 ? `(${unreadNotificationsCount} unread)` : ""}
+          </h2>
           <div className="space-y-3">
             {hydratedNotifications.map((item) => (
-              <div key={item.id} className={`border rounded-lg p-4 ${notificationColors[item.type]}`}>
+              <div key={item.id} className={`border rounded-lg p-4 ${notificationColors[item.type] ?? notificationColors.INFO}`}>
                 <p className="text-sm">{item.message}</p>
                 <p className="text-xs opacity-60 mt-1">{item.time}</p>
               </div>

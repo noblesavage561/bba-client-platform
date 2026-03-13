@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
+import { buildRegisterHref } from "@/lib/authRouting";
+import { ROUTES } from "@/lib/routes";
 
 const STEPS = [
   "Taxpayer Basics",
@@ -39,12 +42,23 @@ const PLANNING_PRIORITIES = [
 
 type FormData = Record<string, unknown>;
 
-export function IntakeWizard() {
+interface SubmissionResult {
+  requiresRegistration: boolean;
+  ownerEmail?: string;
+  businessName?: string;
+}
+
+export interface IntakeWizardProps {
+  className?: string;
+}
+
+export function IntakeWizard({ className = "" }: IntakeWizardProps = {}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const update = (field: string, value: unknown) => {
@@ -122,11 +136,19 @@ export function IntakeWizard() {
         }),
       });
 
+      const payload = await response.json().catch(() => ({ error: "Submission failed. Please try again." }));
+
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({ error: "Submission failed. Please try again." }));
         setSubmitError(payload.error ?? "Submission failed. Please try again.");
         return;
       }
+
+      setSubmissionResult({
+        requiresRegistration: Boolean(payload.requiresRegistration),
+        ownerEmail: typeof payload.ownerEmail === "string" ? payload.ownerEmail : undefined,
+        businessName: typeof payload.businessName === "string" ? payload.businessName : undefined,
+      });
+
       setSubmitted(true);
     } catch {
       setSubmitError("Unable to submit right now. Please try again.");
@@ -136,6 +158,12 @@ export function IntakeWizard() {
   };
 
   if (submitted) {
+    const registerHref = buildRegisterHref(ROUTES.PORTAL, {
+      email: submissionResult?.ownerEmail,
+      businessName: submissionResult?.businessName,
+      fromIntake: true,
+    });
+
     return (
       <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-10 text-center">
         <div className="text-6xl mb-4">🎉</div>
@@ -154,18 +182,32 @@ export function IntakeWizard() {
             <li>You receive checklist nudges for missing filing items</li>
           </ol>
         </div>
-        <a
-          href="/portal"
-          className="bg-brand-blue text-white px-8 py-3 rounded-lg font-semibold hover:bg-brand-blue-light transition-colors inline-block"
-        >
-          Open Client Portal
-        </a>
+        {submissionResult?.requiresRegistration ? (
+          <div className="space-y-3">
+            <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              One more step: create your secure sign-in to unlock the portal.
+            </div>
+            <Link
+              href={registerHref}
+              className="bg-brand-blue text-white px-8 py-3 rounded-lg font-semibold hover:bg-brand-blue-light transition-colors inline-block"
+            >
+              Create Portal Sign-In
+            </Link>
+          </div>
+        ) : (
+          <Link
+            href={ROUTES.PORTAL}
+            className="bg-brand-blue text-white px-8 py-3 rounded-lg font-semibold hover:bg-brand-blue-light transition-colors inline-block"
+          >
+            Open Client Portal
+          </Link>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+    <div className={`bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden ${className}`}>
       {/* Progress Header */}
       <div className="bg-brand-blue p-6">
         <div className="flex justify-between items-center mb-4">

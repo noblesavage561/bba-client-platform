@@ -25,8 +25,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sora)", "system-ui", "sans-serif"],
-        display: ["var(--font-space-grotesk)", "var(--font-sora)", "system-ui", "sans-serif"],
+        sans: ["var(--font-outfit)", "system-ui", "sans-serif"],
+        display: ["var(--font-playfair)", "var(--font-outfit)", "serif"],
       },
     },
   },

@@ -179,12 +179,12 @@ export default function HomePage() {
             >
               Start Intake
             </Link>
-            <a
-              href="mailto:bruce@bbaservices.org"
+            <Link
+              href="/portal"
               className="rounded-lg border-2 border-brand-gold px-8 py-4 text-lg font-bold text-brand-gold transition-colors hover:bg-brand-gold hover:text-white"
             >
-              Talk With BBA
-            </a>
+              Open Client Portal
+            </Link>
           </div>
         </div>
       </section>

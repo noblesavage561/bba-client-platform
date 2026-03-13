@@ -7,6 +7,7 @@ const statusColors: Record<string, string> = {
   PROCESSED: "bg-green-100 text-green-800",
   PROCESSING: "bg-blue-100 text-blue-800",
   PENDING: "bg-gray-100 text-gray-700",
+  VALIDATION_REQUIRED: "bg-amber-100 text-amber-800",
   FAILED: "bg-red-100 text-red-800",
   REJECTED: "bg-red-100 text-red-800",
 };
@@ -77,6 +78,7 @@ export default async function AdminDocumentsPage({
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
           <option value="PROCESSING">Processing</option>
+          <option value="VALIDATION_REQUIRED">Validation Required</option>
           <option value="PROCESSED">Processed</option>
           <option value="FAILED">Failed</option>
           <option value="REJECTED">Rejected</option>

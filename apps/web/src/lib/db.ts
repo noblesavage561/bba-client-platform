@@ -11,6 +11,9 @@ export const prisma =
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 
+// Backwards-compatible alias for routes still importing `db`.
+export const db = prisma;
+
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }

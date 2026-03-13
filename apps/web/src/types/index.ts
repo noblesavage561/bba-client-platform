@@ -34,8 +34,16 @@ export type DocumentStatus =
   | "PENDING"
   | "PROCESSING"
   | "PROCESSED"
+  | "VALIDATION_REQUIRED"
   | "FAILED"
   | "REJECTED";
+
+export type DocumentProcessingState =
+  | "UPLOADED"
+  | "ANALYZING"
+  | "PROCESSED"
+  | "VALIDATION_REQUIRED"
+  | "CORRECTED";
 
 export type ChecklistStatus =
   | "PENDING"
@@ -78,6 +86,9 @@ export interface Document {
   storageKey: string;
   documentType: DocumentType;
   status: DocumentStatus;
+  confidenceScore: number | null;
+  processingState: DocumentProcessingState;
+  extractedEntities: Record<string, unknown> | null;
   extractedData: Record<string, unknown>;
   classificationConfidence: number | null;
   period: string | null;

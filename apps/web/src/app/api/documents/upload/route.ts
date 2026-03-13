@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/db";
-import { classify } from "@/lib/ingestion/classifier";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/authHelpers";
@@ -18,6 +17,19 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+
+const DOC_TYPES = new Set([
+  "BANK_STATEMENT",
+  "TAX_RETURN",
+  "W2",
+  "FORM_1099",
+  "K1",
+  "FORMATION_DOC",
+  "INVOICE",
+  "CONTRACT",
+  "ID_DOCUMENT",
+  "OTHER",
+]);
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,9 +87,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Classify document type if not provided
-    const classification = classify(file.name, file.type);
-    const resolvedType = documentType || classification.documentType;
+    const resolvedType = DOC_TYPES.has((documentType ?? "").toUpperCase())
+      ? (documentType as string).toUpperCase()
+      : "OTHER";
 
     // Save file to /tmp/uploads (dev) or object storage (prod)
     const uploadDir = path.join(process.cwd(), "tmp", "uploads", clientId);
@@ -97,7 +109,10 @@ export async function POST(req: NextRequest) {
         fileSize: file.size,
         storageKey: filePath,
         documentType: resolvedType,
-        classificationConfidence: classification.confidence,
+        confidenceScore: null,
+        processingState: "UPLOADED",
+        extractedEntities: "{}",
+        classificationConfidence: null,
         status: "PENDING",
       },
     });

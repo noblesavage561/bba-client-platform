@@ -92,6 +92,11 @@ model Client {
   checklistItems    ChecklistItem[]
   tasks             Task[]
   notes             Note[]
+  confidenceScore   AIConfidenceScore?
+  signals           CaseSignal[]
+  incomeSources     IncomeSource[]
+  deductions        Deduction[]
+  advisorMessages   AIAdvisorMessage[]
 }
 
 model IntakeSubmission {
@@ -115,11 +120,18 @@ model Document {
   storageKey               String
   documentType             String         @default("OTHER")
   status                   String         @default("PENDING")
+  confidenceScore          Int?           @map("confidence_score")
+  processingState          String         @default("UPLOADED") @map("processing_state")
+  extractedEntities        String         @default("{}") @map("extracted_entities")
   extractedData            String         @default("{}")
   classificationConfidence Float?
   period                   String?
   uploadedAt               DateTime       @default(now())
   processedAt              DateTime?
+  requiresHumanReview      Boolean        @default(false)
+  reviewReason             String?
+  classificationIssues     String         @default("[]")  // JSON array
+  aiExtractionNotes        String?
 
   client              Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
   bankStatementAnalysis BankStatementAnalysis?
@@ -241,4 +253,79 @@ model EmailTemplate {
   body      String
   active    Boolean @default(true)
   variables String  @default("[]")
+}
+
+model AIConfidenceScore {
+  id            String   @id @default(cuid())
+  clientId      String   @unique
+  score         Int      @default(0)  // 0-100
+  identityVerification Int @default(0)
+  incomeDocumentation Int @default(0)
+  cashFlowAnalysis Int @default(0)
+  deductionsCredits Int @default(0)
+  priorYearFiling Int @default(0)
+  lastUpdatedAt DateTime @updatedAt
+  updatedBy     String?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model CaseSignal {
+  id              String   @id @default(cuid())
+  clientId        String
+  signalType      String   // document_classified, confidence_increased, stage_advanced, etc.
+  severity        String   @default("info")  // info | warning | critical
+  title           String
+  body            String
+  source          String   // ai | staff | system
+  isClientVisible Boolean  @default(true)
+  isResolved      Boolean  @default(false)
+  metadata        String   @default("{}")
+  createdAt       DateTime @default(now())
+  resolvedAt      DateTime?
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model IncomeSource {
+  id                String   @id @default(cuid())
+  clientId          String
+  sourceType        String   // W2 | self_employment | rental | investment | other
+  payerName         String
+  payerEin          String?
+  amount            Float
+  taxYear           Int
+  documentId        String?
+  extractedFromAI   Boolean  @default(false)
+  confidence        Float    @default(0)
+  metadata          String   @default("{}")
+  createdAt         DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Deduction {
+  id              String   @id @default(cuid())
+  clientId        String
+  deductionType   String   // home_office | vehicle | equipment | health_insurance | retirement | other
+  description     String
+  estimatedAmount Float?
+  isQualified     Boolean  @default(false)
+  supportingDocs  String   @default("[]")  // document IDs
+  createdAt       DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model AIAdvisorMessage {
+  id              String   @id @default(cuid())
+  clientId        String
+  advisorMessage  String
+  confidenceExplanation String?
+  nextActions     String   @default("[]")  // JSON array of actions
+  stageUnlockCondition String?
+  flags           String   @default("[]")  // JSON array of flags
+  generatedAt     DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }

@@ -8,9 +8,9 @@ import { ROUTES } from "@/lib/routes";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackUrl?: string }>;
+  searchParams: Promise<{ callbackUrl?: string; email?: string; registered?: string }>;
 }) {
-  const { callbackUrl } = await searchParams;
+  const { callbackUrl, email, registered } = await searchParams;
   const safeCallbackUrl = normalizeCallbackPath(callbackUrl, ROUTES.PORTAL);
   const session = await getServerSession(authOptions);
 
@@ -18,5 +18,11 @@ export default async function LoginPage({
     redirect(safeCallbackUrl);
   }
 
-  return <LoginForm callbackUrl={safeCallbackUrl} />;
+  return (
+    <LoginForm
+      callbackUrl={safeCallbackUrl}
+      initialEmail={typeof email === "string" ? email : ""}
+      registered={registered === "1"}
+    />
+  );
 }

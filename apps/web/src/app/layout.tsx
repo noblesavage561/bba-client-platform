@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Sora, Space_Grotesk } from "next/font/google";
+import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { BBAErrorBoundaryWrapper } from "@/components/ui/BBAErrorBoundary";
 
-const sora = Sora({
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-sora",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-outfit",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-space-grotesk",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-playfair",
 });
 
 export const metadata: Metadata = {
@@ -31,20 +32,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} ${spaceGrotesk.variable} font-sans min-h-screen flex flex-col`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <footer className="mt-auto border-t border-slate-200 bg-white/80 py-8 backdrop-blur">
-          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 lg:flex-row lg:px-8 lg:text-left">
-            <BrandLogo compact />
-            <div>
-              <p className="text-sm font-semibold text-brand-blue">
-                &copy; {new Date().getFullYear()} BBA Services. All rights reserved.
-              </p>
-              <p className="text-xs text-slate-500">bruce@bbaservices.org</p>
+      <body className={`${outfit.variable} ${playfair.variable} font-sans min-h-screen flex flex-col`}>
+        <BBAErrorBoundaryWrapper>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <footer className="mt-auto border-t border-slate-200 bg-white/80 py-8 backdrop-blur">
+            <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 text-center sm:px-6 lg:flex-row lg:px-8 lg:text-left">
+              <BrandLogo compact />
+              <div>
+                <p className="text-sm font-semibold text-brand-blue">
+                  &copy; {new Date().getFullYear()} BBA Services. All rights reserved.
+                </p>
+                <p className="text-xs text-slate-500">Build. Bank. Ascend.</p>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </BBAErrorBoundaryWrapper>
       </body>
     </html>
   );

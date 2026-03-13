@@ -1,4 +1,4 @@
-type BadgeVariant = "default" | "success" | "warning" | "error" | "info" | "gold";
+type BadgeVariant = "default" | "success" | "warning" | "error" | "info" | "gold" | "corrected";
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -13,6 +13,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   error: "bg-red-100 text-red-800",
   info: "bg-blue-100 text-blue-800",
   gold: "bg-amber-100 text-amber-900",
+  corrected: "bg-purple-100 text-purple-800",
 };
 
 export function Badge({ variant = "default", children, className = "" }: BadgeProps) {
@@ -41,6 +42,8 @@ export function statusToBadgeVariant(status: string): BadgeVariant {
     case "STRATEGY":
     case "FOUNDATION":
       return "info";
+    case "VALIDATION_REQUIRED":
+      return "warning";
     case "FAILED":
     case "REJECTED":
     case "CLOSED":

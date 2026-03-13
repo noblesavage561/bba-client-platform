@@ -165,10 +165,10 @@ export default function AdminDashboard() {
           <div className="text-2xl mb-1">⚙️</div>
           <div className="text-sm font-medium">Rules and Settings</div>
         </Link>
-        <a href="mailto:bruce@bbaservices.org" className="bg-brand-gold text-white rounded-xl p-4 text-center hover:bg-brand-gold-light transition-colors">
+        <Link href="/admin/config/email-templates" className="bg-brand-gold text-white rounded-xl p-4 text-center hover:bg-brand-gold-light transition-colors">
           <div className="text-2xl mb-1">📧</div>
-          <div className="text-sm font-medium">Notify Team</div>
-        </a>
+          <div className="text-sm font-medium">Email Templates</div>
+        </Link>
       </div>
     </div>
   );

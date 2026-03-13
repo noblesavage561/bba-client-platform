@@ -18,7 +18,7 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
-  const from = `BBA Tax Intelligence Platform <${process.env.SMTP_USER ?? "bruce@bbaservices.org"}>`;
+  const from = `BBA Tax Intelligence Platform <${process.env.SMTP_USER ?? "support@bbaservices.org"}>`;
 
   const info = await transporter.sendMail({
     from,
@@ -58,7 +58,7 @@ export async function sendWelcomeEmail(to: string, clientName: string) {
            style="display: inline-block; background: #2f97cf; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
           Access Your Portal
         </a>
-        <p style="margin-top: 30px; color: #666;">Have questions? Email us at bruce@bbaservices.org</p>
+        <p style="margin-top: 30px; color: #666;">Have questions? Sign in to your portal for secure support updates.</p>
       </div>
     </div>
   `;

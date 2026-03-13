@@ -39,7 +39,10 @@ export async function POST(
     // Mark as processing
     await prisma.document.update({
       where: { id },
-      data: { status: "PROCESSING" },
+      data: {
+        status: "PROCESSING",
+        processingState: "ANALYZING",
+      },
     });
 
     // Load file buffer
@@ -52,6 +55,7 @@ export async function POST(
     let extractedData;
     let documentType = document.documentType;
     let confidence = 0;
+    let period: string | null = null;
 
     if (useAI) {
       // AI-powered extraction
@@ -61,6 +65,7 @@ export async function POST(
       extractedData = aiResult;
       documentType = classification.type || aiResult.documentType || document.documentType;
       confidence = classification.confidence || 0.95;
+      period = aiResult.period ?? null;
     } else {
       // Fallback to rule-based ingestion pipeline
       const result = await runIngestionPipeline({
@@ -75,17 +80,40 @@ export async function POST(
       extractedData = result.extractedData;
       documentType = result.documentType;
       confidence = result.confidence || 0;
+      period = result.period ?? result.extractedData.period ?? null;
     }
 
+    const extractedRecord = extractedData as Record<string, unknown>;
+
     // Update document with extracted data
+    const totalValue =
+      extractedRecord.totalIncome ??
+      extractedRecord.netProfit ??
+      extractedRecord.wages ??
+      extractedRecord.nonemployeeCompensation ??
+      extractedRecord.endingBalance;
+
     await prisma.document.update({
       where: { id },
       data: {
         status: "PROCESSED",
+        processingState: "PROCESSED",
         extractedData: JSON.stringify(extractedData),
-        documentType: documentType,
+        extractedEntities: JSON.stringify({
+          "Effective Date": (extractedRecord.formationDate as string | undefined) ?? period,
+          "Total Value": typeof totalValue === "number" ? String(totalValue) : null,
+          "Tax Year": (extractedRecord.taxYear as string | undefined) ?? null,
+          Party:
+            (extractedRecord.entityName as string | undefined) ??
+            (extractedRecord.employerName as string | undefined) ??
+            (extractedRecord.accountHolder as string | undefined) ??
+            null,
+          "Matter Ref": null,
+        }),
+        documentType,
         classificationConfidence: confidence,
-        period: extractedData.period ?? null,
+        confidenceScore: Math.round(confidence <= 1 ? confidence * 100 : confidence),
+        period,
         processedAt: new Date(),
       },
     });
@@ -105,7 +133,10 @@ export async function POST(
 
     await prisma.document.update({
       where: { id },
-      data: { status: "FAILED" },
+      data: {
+        status: "FAILED",
+        processingState: "VALIDATION_REQUIRED",
+      },
     }).catch(() => {});
 
     return NextResponse.json(
