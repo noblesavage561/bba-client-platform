@@ -1,19 +1,40 @@
 // apps/web/src/lib/ai.ts
 import OpenAI from 'openai';
 
-const openrouter = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    'HTTP-Referer': process.env.NEXTAUTH_URL || 'https://bba-services.app',
-    'X-Title': 'BBA Client Platform',
-  },
-});
+let openrouterClient: OpenAI | null | undefined;
+
+function getOpenRouterClient(): OpenAI | null {
+  if (openrouterClient !== undefined) {
+    return openrouterClient;
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    openrouterClient = null;
+    return openrouterClient;
+  }
+
+  openrouterClient = new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey,
+    defaultHeaders: {
+      'HTTP-Referer': process.env.NEXTAUTH_URL || 'https://bba-services.app',
+      'X-Title': 'BBA Client Platform',
+    },
+  });
+
+  return openrouterClient;
+}
 
 /**
  * Get a chat completion from the LLM for advisory/Q&A purposes
  */
 export async function getChatCompletion(prompt: string, context: string) {
+  const openrouter = getOpenRouterClient();
+  if (!openrouter) {
+    return "AI chat is unavailable right now.";
+  }
+
   const response = await openrouter.chat.completions.create({
     model: "minimax/minimax-m2.5",
     messages: [
@@ -29,6 +50,11 @@ export async function getChatCompletion(prompt: string, context: string) {
  * Returns JSON with documentType, totalIncome, taxYear, and other relevant fields
  */
 export async function extractDocumentData(text: string) {
+  const openrouter = getOpenRouterClient();
+  if (!openrouter) {
+    return {};
+  }
+
   const response = await openrouter.chat.completions.create({
     model: "minimax/minimax-m2.5",
     response_format: { type: "json_object" },
@@ -59,6 +85,11 @@ Example format:
  * Classify document type using AI (alternative to rule-based classifier)
  */
 export async function classifyDocument(text: string): Promise<{ type: string; confidence: number }> {
+  const openrouter = getOpenRouterClient();
+  if (!openrouter) {
+    return { type: "OTHER", confidence: 0 };
+  }
+
   const response = await openrouter.chat.completions.create({
     model: "minimax/minimax-m2.5",
     response_format: { type: "json_object" },

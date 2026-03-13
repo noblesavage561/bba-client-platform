@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { ROUTES } from "@/lib/routes";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { data: session } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -65,52 +63,30 @@ export function Navbar() {
             >
               Preparer Workspace
             </Link>
-            {session ? (
-              <>
-                <span className="text-sm text-slate-500">
-                  {session.user.email}
+            <Link
+              href={ROUTES.PORTAL_NOTIFICATIONS}
+              className="relative text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
+              aria-label="Open notification center"
+            >
+              <span className="text-lg">🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-3 min-w-[18px] px-1 h-[18px] rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-bold">
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="text-slate-600 hover:text-red-600 text-sm font-medium transition-colors"
-                >
-                  Sign Out
-                </button>
-                <Link
-                  href={ROUTES.PORTAL_NOTIFICATIONS}
-                  className="relative text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
-                  aria-label="Open notification center"
-                >
-                  <span className="text-lg">🔔</span>
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-3 min-w-[18px] px-1 h-[18px] rounded-full bg-red-500 text-white text-[10px] leading-[18px] text-center font-bold">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </Link>
-                <Link
-                  href={ROUTES.APPLY}
-                  className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
-                >
-                  Start Intake
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href={ROUTES.REGISTER}
-                  className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
-                >
-                  Register
-                </Link>
-              </>
-            )}
+              )}
+            </Link>
+            <Link
+              href={ROUTES.LOGIN}
+              className="text-slate-600 hover:text-brand-blue text-sm font-medium transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              href={ROUTES.APPLY}
+              className="bg-brand-gold hover:bg-brand-gold-light text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+            >
+              Start Intake
+            </Link>
           </div>
 
           <button
@@ -139,40 +115,18 @@ export function Navbar() {
             <Link href={ROUTES.PREPARER} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
               Preparer Workspace
             </Link>
-            {session ? (
-              <>
-                <div className="px-2 py-2 text-sm text-slate-500">
-                  {session.user.email}
-                </div>
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="block w-full text-left text-red-600 hover:text-red-700 px-2 py-2 text-sm font-medium"
-                >
-                  Sign Out
-                </button>
-                <Link href={ROUTES.PORTAL_NOTIFICATIONS} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
-                  Notification Center{unreadCount > 0 ? ` (${unreadCount})` : ""}
-                </Link>
-                <Link
-                  href={ROUTES.APPLY}
-                  className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
-                >
-                  Start Intake
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/login" className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
-                  Sign In
-                </Link>
-                <Link
-                  href={ROUTES.REGISTER}
-                  className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
-                >
-                  Register
-                </Link>
-              </>
-            )}
+            <Link href={ROUTES.PORTAL_NOTIFICATIONS} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+              Notification Center{unreadCount > 0 ? ` (${unreadCount})` : ""}
+            </Link>
+            <Link href={ROUTES.LOGIN} className="block text-slate-600 hover:text-brand-blue px-2 py-2 text-sm font-medium">
+              Sign In
+            </Link>
+            <Link
+              href={ROUTES.APPLY}
+              className="block bg-brand-gold text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 text-center"
+            >
+              Start Intake
+            </Link>
           </div>
         )}
       </div>

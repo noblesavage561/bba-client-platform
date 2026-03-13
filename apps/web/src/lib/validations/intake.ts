@@ -90,7 +90,7 @@ export const intakeFormSchema = z.object({
 
 export const intakeSubmissionSchema = z.object({
   clientId: z.string().min(1),
-  answers: z.record(z.unknown()),
+  answers: z.record(z.string(), z.unknown()),
   step: z.number().int().min(1).max(5),
   completed: z.boolean(),
 });

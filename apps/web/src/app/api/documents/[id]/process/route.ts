@@ -3,10 +3,42 @@ import { readFile } from "fs/promises";
 import { prisma } from "@/lib/db";
 import { runIngestionPipeline } from "@/lib/ingestion/pipeline";
 import { updateChecklistFromDocument } from "@/lib/ingestion/checklist-updater";
+import type { DocumentType } from "@/lib/ingestion/classifier";
 import { extractDocumentData, classifyDocument } from "@/lib/ai";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/authHelpers";
+
+const DOCUMENT_TYPES: DocumentType[] = [
+  "BANK_STATEMENT",
+  "TAX_RETURN",
+  "W2",
+  "FORM_1099",
+  "K1",
+  "FORMATION_DOC",
+  "INVOICE",
+  "CONTRACT",
+  "ID_DOCUMENT",
+  "OTHER",
+];
+
+function normalizeDocumentType(value: string, fallback: DocumentType = "OTHER"): DocumentType {
+  const normalized = value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "_");
+  if (DOCUMENT_TYPES.includes(normalized as DocumentType)) {
+    return normalized as DocumentType;
+  }
+
+  const map: Record<string, DocumentType> = {
+    "1099": "FORM_1099",
+    "FORM1099": "FORM_1099",
+    "FORMATION": "FORMATION_DOC",
+    "FORMATION_DOCUMENT": "FORMATION_DOC",
+    "ID": "ID_DOCUMENT",
+    "GOVERNMENT_ID": "ID_DOCUMENT",
+  };
+
+  return map[normalized] ?? fallback;
+}
 
 export async function POST(
   req: NextRequest,
@@ -53,7 +85,7 @@ export async function POST(
     const useAI = process.env.OPENROUTER_API_KEY && process.env.NEXT_PUBLIC_AI_ENABLED === 'true';
     
     let extractedData;
-    let documentType = document.documentType;
+    let documentType: DocumentType = normalizeDocumentType(document.documentType);
     let confidence = 0;
     let period: string | null = null;
 
@@ -63,7 +95,10 @@ export async function POST(
       const classification = await classifyDocument(textContent);
       
       extractedData = aiResult;
-      documentType = classification.type || aiResult.documentType || document.documentType;
+      documentType = normalizeDocumentType(
+        String(classification.type || aiResult.documentType || document.documentType),
+        documentType
+      );
       confidence = classification.confidence || 0.95;
       period = aiResult.period ?? null;
     } else {
